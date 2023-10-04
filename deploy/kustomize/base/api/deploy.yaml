@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.22.17-standalone/deployment-apps-v1.json
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  labels:
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+    spec:
+      containers:
+        - name: api
+          image: ocsarchive-iiif-backend
+          command:
+            - uvicorn
+            - ocsarchive_iiif.api.main:app_factory
+            - --factory
+            - --port=8000
+            - --host=0.0.0.0
+            - --proxy-headers
+            - --forwarded-allow-ips=*
+            - --timeout-graceful-shutdown=60
+          ports:
+            - name: api
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: common-env
+                optional: false

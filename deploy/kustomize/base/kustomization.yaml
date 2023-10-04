@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ./api/
+  - ./worker/
+
+commonLabels:
+  app.kubernetes.io/name: ocsarchive-iiif-backend
+  app.kubernetes.io/instance: ocsarchive-iiif-backend
+
+namePrefix: ocsarchive-iiif-backend-
+
+configMapGenerator:
+  - name: common-env
+    literals:
+      - OCSARCHIVE_IIIF_BACKEND_TEMPORAL__HOST=changeme.invalid
+      - OCSARCHIVE_IIIF_BACKEND_TEMPORAL__PORT=changeme
+
+  - name: worker-env
+    literals:
+      - OCSARCHIVE_IIIF_BACKEND_TEMPORAL__WORKER__WORKING_DIR=/mnt/volumes/working-dir

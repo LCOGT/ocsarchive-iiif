@@ -1,0 +1,14 @@
+# first ignore everything
+**/*
+
+# now add things to include
+!./poetry-requirements.txt
+!./README.md
+!./pyproject.toml
+!./poetry.toml
+!./poetry.lock
+!./src/
+
+# but stil ignore all __pycache__
+
+**/*__pycache__

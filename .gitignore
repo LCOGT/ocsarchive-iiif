@@ -1,0 +1,12 @@
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+
+# kind kubeconfig
+kind-kubeconfig
+
+
+# Python cache
+__pycache__

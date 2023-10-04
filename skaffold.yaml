@@ -1,0 +1,106 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: main
+requires:
+  - git:
+      repo: git@github.com:jashandeep-sohi/temporal-k8s.git
+      ref: master
+    activeProfiles:
+      - name: pg13
+        activatedBy:
+          - local-depends
+profiles:
+  - name: local
+    build:
+      artifacts:
+        - image: ocsarchive-iiif-backend
+          context: backend
+          docker:
+            dockerfile: Dockerfile
+          sync:
+            infer:
+              - src/**/*.py
+    manifests:
+      kustomize:
+        paths:
+          - deploy/kustomize/overlays/local/
+    deploy:
+      kubectl: {}
+    portForward:
+      - resourceType: Service
+        resourceName: nginx-ingress-nginx-controller
+        namespace: ingress
+        port: 443
+        localPort: 8443
+
+      - resourceType: Service
+        resourceName: nginx-ingress-nginx-controller
+        namespace: ingress
+        port: 80
+        localPort: 8000
+
+  - name: local-depends
+    manifests:
+      kustomize:
+        paths:
+          - deploy/kustomize/overlays/local-depends/
+    deploy:
+      kubectl: {}
+      helm:
+        releases:
+          - name: minio
+            remoteChart: oci://registry-1.docker.io/bitnamicharts/minio
+            version: 12.8.11
+            namespace: minio
+            createNamespace: true
+            upgradeOnChange: true
+            setValues:
+              auth:
+                rootUser: adminadmin
+                rootPassword: adminadmin
+              defaultBuckets: "ocsarchive-iiif"
+              persistence:
+                enabled: true
+                size: 2Gi
+              ingress:
+                enabled: true
+                ingressClassName: nginx
+                hostname: minio.local.lco.earth
+              apiIngress:
+                enabled: true
+                ingressClassName: nginx
+                hostname: minio-api.local.lco.earth
+                annotations:
+                  "nginx\\.ingress\\.kubernetes\\.io/enable-cors": '"true"'
+
+          - name: nginx
+            repo: https://kubernetes.github.io/ingress-nginx
+            remoteChart: ingress-nginx
+            namespace: ingress
+            createNamespace: true
+            upgradeOnChange: true
+            setValues:
+              controller:
+                service.type: ClusterIP
+                allowSnippetAnnotations: true
+                config:
+                  http-snippet: |
+                    # parse the incoming port
+                    map $http_host $custom_port {
+                      "~^[^\:]+:(?<p>[0-9]+)$" $p;
+                      default $http_host;
+                    }
+
+    portForward:
+      - resourceType: Service
+        resourceName: nginx-ingress-nginx-controller
+        namespace: ingress
+        port: 443
+        localPort: 8443
+
+      - resourceType: Service
+        resourceName: nginx-ingress-nginx-controller
+        namespace: ingress
+        port: 80
+        localPort: 8000

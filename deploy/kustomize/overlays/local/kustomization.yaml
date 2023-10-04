@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/
+  - ./ing-ocsarchive-iiif.yaml
+
+patches:
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: ocsarchive-iiif-backend-common-env
+      data:
+        OCSARCHIVE_IIIF_BACKEND_FASTAPI__DEBUG: "true"
+        OCSARCHIVE_IIIF_BACKEND_TEMPORAL__WORKER__LOG_LEVEL: "info"
+        OCSARCHIVE_IIIF_BACKEND_TEMPORAL__WORKER__RELOAD__ENABLED: "true"
+        OCSARCHIVE_IIIF_BACKEND_TEMPORAL__WORKER__RELOAD__PATH: "/app/src/"
+        OCSARCHIVE_IIIF_BACKEND_TEMPORAL__HOST: "temporal-frontend.temporal-pg13.svc.cluster.local"
+        OCSARCHIVE_IIIF_BACKEND_TEMPORAL__PORT: "7233"
+        OCSARCHIVE_IIIF_BACKEND_OCSARCHIVE_API: "https://archiveapi.photonranch.org/"
+        OCSARCHIVE_IIIF_BACKEND_S3__ENDPOINT_URL: "http://minio.minio.svc.cluster.local:9000"
+        OCSARCHIVE_IIIF_BACKEND_S3__ACCESS_KEY_ID: "adminadmin"
+        OCSARCHIVE_IIIF_BACKEND_S3__SECRET_ACCESS_KEY: "adminadmin"
+        OCSARCHIVE_IIIF_BACKEND_S3__BUCKET: "ocsarchive-iiif"
+
+
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/command/-
+        value: --reload
+      - op: add
+        path: /spec/template/spec/containers/0/command/-
+        value: --timeout-graceful-shutdown=15
+    target:
+      kind: Deployment
+      name: ocsarchive-iiif-backend-api
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: worker
+      spec:
+        replicas: 1
