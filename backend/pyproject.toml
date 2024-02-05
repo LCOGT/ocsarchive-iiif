@@ -8,7 +8,7 @@ packages = [{include = "ocsarchive_iiif", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.103.0"
+fastapi = "^0.109.1"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
 pydantic-settings = "^2.0.3"
 temporalio = "^1.3.0"
